@@ -6,7 +6,9 @@ const APP_VERSION = "v3.3";
 const ZERO_SATELLITE_ZOOM = 9;
 const ZERO_SATELLITE_MAX_ZOOM = 14;
 const IGN_PROXY_PATH = "ign-terremotos";
-const DEFAULT_LOCAL_APP_URL = "http://10.197.22.196:8791/";
+const IGN_STATIC_HTML = "ign-terremotos.html";
+const IGN_PROXY_STORAGE_KEY = "casasolaIgnProxyUrl";
+const DEFAULT_HTTPS_IGN_PROXY_URL = "";
 
 const SAMPLE_TEXT = `EVENTO: es2026mnvfi Madrid 2026-06-28 09:23:55
 El INSTITUTO GEOGRAFICO NACIONAL informa que se ha producido un terremoto con estos datos epicentrales:
@@ -332,9 +334,6 @@ async function fetchIgnEvents(days) {
 }
 
 async function fetchIgnHtml(days) {
-  if (requiresLocalServer()) {
-    throw new Error(`Estas abriendo la app desde ${location.origin}. Desde GitHub Pages el navegador bloquea la lectura IGN del servidor local. Abre ${DEFAULT_LOCAL_APP_URL}?v=5 en el iPhone, con el ordenador y el movil en la misma Wi-Fi y serve.ps1 abierto.`);
-  }
   let lastError = "";
   for (const baseUrl of ignProxyUrls()) {
     const separator = baseUrl.includes("?") ? "&" : "?";
@@ -355,24 +354,53 @@ async function fetchIgnHtml(days) {
       lastError = `${url}: ${error.message}`;
     }
   }
-  throw new Error(`No se pudo conectar con el proxy del IGN en ${location.origin}. Comprueba que el movil esta en la misma Wi-Fi que el ordenador y que serve.ps1 sigue abierto. Ultimo error: ${lastError}`);
+  throw new Error(`No se pudo leer el listado del IGN. Si estas en GitHub Pages, espera a que termine la accion programada o ejecutala manualmente. Ultimo error: ${lastError}`);
 }
 
 function ignProxyUrls() {
   const origin = location.origin && location.origin !== "null" ? location.origin : "";
-  return [`${origin}/${IGN_PROXY_PATH}`, `./${IGN_PROXY_PATH}`];
+  const urls = [];
+  const configured = configuredIgnProxyUrl();
+  if (configured) urls.push(configured);
+  urls.push(`./${IGN_STATIC_HTML}`);
+  if (!requiresGithubStaticFile()) urls.push(`${origin}/${IGN_PROXY_PATH}`, `./${IGN_PROXY_PATH}`);
+  return urls;
 }
 
-function requiresLocalServer() {
+function requiresGithubStaticFile() {
   return location.protocol === "https:" && /(^|\.)github\.io$/i.test(location.hostname);
 }
 
 function initProxyNotice() {
   const notice = $("proxyNote");
-  const link = $("localAppLink");
-  if (!notice || !link) return;
-  link.href = `${DEFAULT_LOCAL_APP_URL}?v=5`;
-  if (requiresLocalServer()) notice.hidden = false;
+  const text = $("proxyNoteText");
+  if (!notice || !text) return;
+  if (requiresGithubStaticFile()) text.textContent = "GitHub Actions actualiza ign-terremotos.html periodicamente. Pulsa Leer IGN para usar el ultimo listado publicado.";
+  else text.textContent = "En local se usa serve.ps1; en GitHub Pages se usa el fichero ign-terremotos.html actualizado por GitHub Actions.";
+}
+
+function configuredIgnProxyUrl() {
+  const saved = localStorage.getItem(IGN_PROXY_STORAGE_KEY) || DEFAULT_HTTPS_IGN_PROXY_URL;
+  return normalizeProxyUrl(saved);
+}
+
+function normalizeProxyUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.endsWith(`/${IGN_PROXY_PATH}`) ? text : `${text.replace(/\/+$/, "")}/${IGN_PROXY_PATH}`;
+}
+
+function saveIgnProxyUrl() {
+  const input = $("ignProxyUrl");
+  const text = $("proxyNoteText");
+  const url = normalizeProxyUrl(input?.value);
+  if (!url || !/^https:\/\//i.test(url)) {
+    if (text) text.textContent = "La URL debe empezar por https:// y terminara usando /ign-terremotos.";
+    return;
+  }
+  localStorage.setItem(IGN_PROXY_STORAGE_KEY, url);
+  if (input) input.value = url;
+  if (text) text.textContent = "Proxy guardado. Pulsa Leer IGN.";
 }
 
 function parseIgnRecentHtml(html) {

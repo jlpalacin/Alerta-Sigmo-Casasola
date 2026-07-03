@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0b5f63">
     <title>Casasola Movil</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=5">
+    <link rel="stylesheet" href="styles.css?v=7">
   </head>
   <body>
     <main class="app">
@@ -49,10 +49,9 @@
           <input id="ignDays" type="number" min="1" max="10" step="1" value="7" inputmode="numeric">
         </label>
 
-        <div class="proxy-note" id="proxyNote" hidden>
-          <strong>Lectura IGN local</strong>
-          <span>Desde GitHub Pages el navegador no puede usar el proxy del ordenador.</span>
-          <a id="localAppLink" href="http://10.197.22.196:8791/?v=5">Abrir version local</a>
+        <div class="proxy-note" id="proxyNote">
+          <strong>Lectura IGN automatica</strong>
+          <span id="proxyNoteText">GitHub Actions actualiza el listado del IGN periodicamente. No hace falta serve.ps1.</span>
         </div>
 
         <label class="dropzone" for="fileInput" id="dropzone">
@@ -153,8 +152,8 @@
       <button type="button" data-action="copyCoords">Copiar coordenadas</button>
       <button type="button" data-action="setQuakeCoords">Cambiar coordenada del sismo</button>
     </div>
-    <script src="zero-vector-data.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+    <script src="zero-vector-data.js?v=7"></script>
+    <script src="app.js?v=7"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         navigator.serviceWorker.register("sw.js").catch(() => {});

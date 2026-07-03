@@ -35,4 +35,8 @@ http://10.197.22.196:8790/
 En Android/Chrome usa `Anadir a pantalla de inicio`.
 En iPhone/Safari usa `Compartir` y despues `Anadir a pantalla de inicio`.
 
-La lectura automatica del IGN necesita que `serve.ps1` este abierto. El analisis manual por texto o archivo funciona desde la propia interfaz.
+La lectura automatica del IGN puede funcionar de tres formas:
+
+- Con GitHub Actions, recomendado para iPhone y GitHub Pages. Ver `GITHUB_ACTIONS_IGN.md`.
+- Con `serve.ps1`, si abres la app desde el ordenador o desde la misma Wi-Fi.
+- Sin `serve.ps1`, usando un Cloudflare Worker HTTPS. Ver `CLOUDFLARE_WORKER.md`.
