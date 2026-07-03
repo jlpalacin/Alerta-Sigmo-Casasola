@@ -5,7 +5,7 @@ const UNKNOWN = "UNKNOWN";
 const APP_VERSION = "v3.3";
 const ZERO_SATELLITE_ZOOM = 9;
 const ZERO_SATELLITE_MAX_ZOOM = 14;
-const IGN_PROXY_URLS = ["ign-terremotos", "http://127.0.0.1:8789/ign-terremotos", "http://127.0.0.1:8788/ign-terremotos", "http://127.0.0.1:8787/ign-terremotos"];
+const IGN_PROXY_PATH = "ign-terremotos";
 
 const SAMPLE_TEXT = `EVENTO: es2026mnvfi Madrid 2026-06-28 09:23:55
 El INSTITUTO GEOGRAFICO NACIONAL informa que se ha producido un terremoto con estos datos epicentrales:
@@ -331,7 +331,7 @@ async function fetchIgnEvents(days) {
 
 async function fetchIgnHtml(days) {
   let lastError = "";
-  for (const baseUrl of IGN_PROXY_URLS) {
+  for (const baseUrl of ignProxyUrls()) {
     const separator = baseUrl.includes("?") ? "&" : "?";
     const url = `${baseUrl}${separator}days=${encodeURIComponent(days)}`;
     try {
@@ -350,7 +350,12 @@ async function fetchIgnHtml(days) {
       lastError = `${url}: ${error.message}`;
     }
   }
-  throw new Error(`No se pudo conectar con el proxy local del IGN. Abre la aplicacion desde http://127.0.0.1:8789/ o reinicia serve.ps1. Ultimo error: ${lastError}`);
+  throw new Error(`No se pudo conectar con el proxy del IGN en ${location.origin}. Comprueba que el movil esta en la misma Wi-Fi que el ordenador y que serve.ps1 sigue abierto. Ultimo error: ${lastError}`);
+}
+
+function ignProxyUrls() {
+  const origin = location.origin && location.origin !== "null" ? location.origin : "";
+  return [`${origin}/${IGN_PROXY_PATH}`, `./${IGN_PROXY_PATH}`];
 }
 
 function parseIgnRecentHtml(html) {
