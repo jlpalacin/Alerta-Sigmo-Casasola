@@ -6,6 +6,7 @@ const APP_VERSION = "v3.3";
 const ZERO_SATELLITE_ZOOM = 9;
 const ZERO_SATELLITE_MAX_ZOOM = 14;
 const IGN_PROXY_PATH = "ign-terremotos";
+const DEFAULT_LOCAL_APP_URL = "http://10.197.22.196:8791/";
 
 const SAMPLE_TEXT = `EVENTO: es2026mnvfi Madrid 2026-06-28 09:23:55
 El INSTITUTO GEOGRAFICO NACIONAL informa que se ha producido un terremoto con estos datos epicentrales:
@@ -125,6 +126,7 @@ initMapInteractions();
 initContextMenu();
 renderIsolineOverlays();
 initSatelliteTiles();
+initProxyNotice();
 
 async function runAnalyze() {
   const button = $("analyzeBtn");
@@ -330,6 +332,9 @@ async function fetchIgnEvents(days) {
 }
 
 async function fetchIgnHtml(days) {
+  if (requiresLocalServer()) {
+    throw new Error(`Estas abriendo la app desde ${location.origin}. Desde GitHub Pages el navegador bloquea la lectura IGN del servidor local. Abre ${DEFAULT_LOCAL_APP_URL}?v=5 en el iPhone, con el ordenador y el movil en la misma Wi-Fi y serve.ps1 abierto.`);
+  }
   let lastError = "";
   for (const baseUrl of ignProxyUrls()) {
     const separator = baseUrl.includes("?") ? "&" : "?";
@@ -356,6 +361,18 @@ async function fetchIgnHtml(days) {
 function ignProxyUrls() {
   const origin = location.origin && location.origin !== "null" ? location.origin : "";
   return [`${origin}/${IGN_PROXY_PATH}`, `./${IGN_PROXY_PATH}`];
+}
+
+function requiresLocalServer() {
+  return location.protocol === "https:" && /(^|\.)github\.io$/i.test(location.hostname);
+}
+
+function initProxyNotice() {
+  const notice = $("proxyNote");
+  const link = $("localAppLink");
+  if (!notice || !link) return;
+  link.href = `${DEFAULT_LOCAL_APP_URL}?v=5`;
+  if (requiresLocalServer()) notice.hidden = false;
 }
 
 function parseIgnRecentHtml(html) {
